@@ -34,8 +34,13 @@
 - Topo mạng logic: Đường dẫn mà tín hiệu dữ liệu của người dùng đi qua topo vật lý
 - Một số loại topo vật lý
   * `BUS`: Tất cả các thiết bị kết nối tới cùng một đoạn cáp đồng trục. Ở cuối cáp đặt một thiết bị đầu cuối. Nếu cáp đứt thì mạng sẽ bị sập
+
 ![bus](https://user-images.githubusercontent.com/71936544/135959497-ff755764-5cae-4b53-bf6b-78d5ed38b20d.png)
+
   * `RING`: Tất cả các máy tính và thiết bị mạng được kết nối trên một dây cáp và hai thiết bị cuối cùng được kết nối với nhau để tạo thành một "vòng".Nếu cáp bị đứt mạng của bạn không hoạt động. Ngoài ra còn có thiết lập "vòng kép" để dự phòng, đây chỉ là một cáp khác để đảm bảo nếu một cáp bị đứt, mạng của bạn sẽ không bị hỏng.   
+
   ![ring](https://user-images.githubusercontent.com/71936544/135959697-5a39fade-fb40-4399-9081-ef0242dffb91.png)
+  
   * `STAR`: Tất cả các thiết bị cuối của chúng tôi (máy tính) đều được kết nối với một thiết bị trung tâm tạo mô hình ngôi sao. Đây là những gì chúng ta sử dụng ngày nay trên các mạng cục bộ (LAN) với một công tắc ở giữa. Các kết nối vật lý chúng tôi thường sử dụng là UTP (Cặp xoắn đôi không được che chắn). Tất nhiên khi công tắc của bạn gặp sự cố mạng của bạn cũng đang giảm
+
 ![star](https://user-images.githubusercontent.com/71936544/135959777-903d7064-4209-40c0-bb3d-80a75d3b5122.png)
