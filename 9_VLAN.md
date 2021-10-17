@@ -56,3 +56,26 @@ Gán port Fa0/1, Fa0/2 cho VLAN50
   SwitchA(config-if)#switchport access vlan 50
 ```
 ![image](https://user-images.githubusercontent.com/71936544/137612222-1f950173-9bc1-4eb3-8037-4bb2666d74e4.png)
+
+### Tạo đường trunk
+
+![image](https://user-images.githubusercontent.com/71936544/137615159-f28d6790-bef0-4b3f-92e0-cdcca1acb076.png)
+
+Để tạo trunk trước tiên cần chọn kiểu đóng gói `802.1Q - dot1Q` hay `ISL`
+```
+  SwitchA(config-if)#switchport trunk encapsulation dot1q
+  SwitchB(config-if)#switchport trunk encapsulation dot1q
+```
+Sau đó tạo đường trunk giữa 2 switch
+```
+  SwitchA(config)#interface fa0/14
+  SwitchA(config-if)#switchport mode trunk
+  ----
+  SwitchB(config)#interface fa0/14
+  SwitchB(config-if)#switchport mode trunk
+```
+
+Lưu ý khi thay đổi mode hoạt động của switch với lệnh `switchport mode ...` thì ta có các mode hoạt động trên 2 switch như sau
+
+![image](https://user-images.githubusercontent.com/71936544/137615525-967b8fe1-9446-4d9c-b6c3-a63c3122bfa1.png)
+
