@@ -79,3 +79,24 @@ Lưu ý khi thay đổi mode hoạt động của switch với lệnh `switchpor
 
 ![image](https://user-images.githubusercontent.com/71936544/137615525-967b8fe1-9446-4d9c-b6c3-a63c3122bfa1.png)
 
+Việc đàm phán trạng thái cổng bằng cách sử dụng `dynamic auto` và `dynamic desirable` được gọi là `DTP - Dynamic Trunking Protocol`. Vì lí do bảo mật nên cần tắt chức năng đàm phán này
+```
+  Switch(config-if)#switchport mode access
+  Switch(config-if)#switchport nonegotiate
+```
+
+`Native Vlan` mặc định trên bộ chuyển mạch của Cisco là Vlan1. Để đảm bao an toàn, ta nên đổi nó sang một Vlan khác
+```
+  SwitchA(config)#interface fa0/14
+  SwitchA(config-if)#switchport trunk native vlan 10
+---
+  SwitchB(config)#interface fa0/14
+  SwitchB(config-if)#switchport trunk native vlan 10
+```
+
+### Kết nối giữa 2 Vlan
+
+![image](https://user-images.githubusercontent.com/71936544/137631366-3627c440-0888-46eb-b936-7d8c0f26cf30.png)
+
+Kết nối giữa các VLan khác nhau có thể kết nối với nhau nhưng cần phải có router. Mỗi VLAN có một mạng IP khác nhau. Nếu máy tính trong VLAN 10 muốn giao tiếp với máy tính trong VLAN 20, chúng ta sẽ phải định tuyến giữa hai mạng. Đây là những gì chúng tôi gọi là bộ định tuyến trên thanh (router on a stick).
+
