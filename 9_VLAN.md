@@ -26,7 +26,7 @@ Như hình trên, ta có 2 switch với VLAN voice và VLAN data. Khi Phone A mu
 
 Như chúng ta thấy, các máy ở mỗi bên thuộc các VLAN khác nhau, bằng cách sử dụng `trunk` thì mọi lưu lượng của tất cả các VLAN có thể được chuyển giữa 2 switch. Vì khung Ethernet không có trường để xác định gói tin thuộc về VLAN nào nên ta cần một giao thức khác
 
-Có 2 giao thức `trunking` (VTP - VLAN Trunking Protocol):
+Có 2 giao thức `trunking`
   + 802.1Q: là chuẩn giao thức và được hỗ trợ bởi nhiều nhà cung cấp
   + ISL: là giao thức của Cisco
 
@@ -100,3 +100,59 @@ Việc đàm phán trạng thái cổng bằng cách sử dụng `dynamic auto` 
 
 Kết nối giữa các VLan khác nhau có thể kết nối với nhau nhưng cần phải có router. Mỗi VLAN có một mạng IP khác nhau. Nếu máy tính trong VLAN 10 muốn giao tiếp với máy tính trong VLAN 20, chúng ta sẽ phải định tuyến giữa hai mạng. Đây là những gì chúng tôi gọi là bộ định tuyến trên thanh (router on a stick).
 
+# VTP - Vlan Trunking Protocol
+Giả sử một mạng với 20 thiết bị chuyển mạch và 50 VLAN. Thông thường sẽ phải cấu hình từng bộ chuyển mạch riêng biệt và tạo các VLAN đó trên mỗi bộ chuyển mạch. Đó là một nhiệm vụ tốn thời gian nên ta sử dụng VTP (VLAN Trunking Protocol). VTP sẽ cho phép tạo VLAN trên một bộ chuyển mạch và tất cả các bộ chuyển mạch khác sẽ đồng bộ hóa
+
+### VTP Transparent
+
+![image](https://user-images.githubusercontent.com/71936544/137748921-9cbc2b92-14ce-4aa8-971d-5fed18366a0c.png)
+
+VTP Transparent sẽ chỉ gửi gói tin đồng bộ từ VTP Server tới các VTP Client chứ bản thân nó không đồng bộ thông tin đấy
+VTP Server thực chất cũng chính là VTP Client. Mỗi khi thay đổi tham số, số lần sửa đổi sẽ thay đổi. 
+
+### VTP pruning
+
+![image](https://user-images.githubusercontent.com/71936544/137749284-faaa1bac-c21a-4b47-b741-036860e12234.png)
+
+Giả sử một PC trong VLan 10 gửi bản tin quảng bá, do các đường đã thực hiện trunking nên gói sẽ đi tới các bộ chuyển mạch. Ta thấy ở bộ chuyển mạch giữa không có Vlan10 nên nếu gói tin đi vào đó sẽ gây ra lãng phí băng thông. Do đó ta sử dụng `VTP pruning`
+
+![image](https://user-images.githubusercontent.com/71936544/137749666-dd1663a0-91df-4fde-9bf3-36b760d4c21b.png)
+
+Thực hiện lệnh `show vtp status`, ta có các tham số sau:
+  + Configuration revision 0: Mỗi khi ta thay đổi các Vlan thì số này sẽ thay đổi
+  + VTP Operating mode: Mặc định là VTP Server
+  + VTP Pruning: Tham số này giúp ngăn chặn các gói tin không cần thiết vào đường trunk
+  + VTP V2 Mode: Bộ chuyển mạch có thể chạy VTP ver2 nhưng nó đay chạy ở ver1
+
+Tạo Vlan trên SwitchA và đồng bộ sang B,C:
+```
+  SwitchA(config)#vlan 10
+  SwitchA(config-vlan)#name Printers
+  ----
+  SwitchB#debug sw-vlan vtp events
+  ---
+  SwitchC#debug sw-vlan vtp events
+  ---
+  SwitchA(config)#vtp domain GNS3VAULT
+  
+  ## Tắt chế độ debug
+  ---
+  SwitchB#no debug all
+  ---
+  SwitchC#no debug all
+```
+
+Chuyển chế độ Client <-> Server <-> Transparent. Khi ở mode Client thì Switch không thể tạo Vlan, còn mode Trans thì có thể tạo nhưng không đồng bộ
+```
+  SwitchB(config)#vtp mode [...]
+```
+
+> Có sự khác biệt giữa chế độ VTP Trans và chế độ Client/Server. VTP Transparent lưu trữ tất cả thông tin VLAN trong running-config. Chế độ Client/Server lưu trữ thông tin trong cơ sở dữ liệu VLAN (vlan.dat trên bộ nhớ flash).
+
+### Lưu ý
+Bộ chuyển mạch nào có số lần sửa đổi cao hơn thì các bộ chuyển mạch khác sẽ đồng bộ theo nó. Giả sử ta có A là Server, B và C là Client, khi ta thay đổi A thì B,C được đồng bộ. Tuy nhiên nếu ta đưa C sang 1 topo khác làm Server để test thì số lần sửa đổi của C sẽ tăng lên. Nếu ta đưa C về topo ban đầu thì A,B sẽ đồng bộ theo C
+> Để không bị mất dữ liệu trong những trường hợp này thì trước khi đưa vào topo ban đầu, ta cần reset lại số lần sửa đổi của C bằng cách:
+>   + Đổi domain-name
+>   + Xóa fiel vlan.dat trong bộ nhớ flash
+
+Nếu ta xóa hết Vlan của A thì tất cả các interface sẽ ở trạng thái 'no-man's land' chứ không phải Vlan1 như ban đầu. Do đó ta cần gán lại chúng
