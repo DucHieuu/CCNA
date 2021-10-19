@@ -86,6 +86,9 @@ Việc đàm phán trạng thái cổng bằng cách sử dụng `dynamic auto` 
 ```
 
 `Native Vlan` mặc định trên bộ chuyển mạch của Cisco là Vlan1. Để đảm bao an toàn, ta nên đổi nó sang một Vlan khác
+
+![image](https://user-images.githubusercontent.com/71936544/137842196-54b47519-a3d9-4de4-a767-5bd190622fd3.png)
+
 ```
   SwitchA(config)#interface fa0/14
   SwitchA(config-if)#switchport trunk native vlan 10
@@ -93,6 +96,9 @@ Việc đàm phán trạng thái cổng bằng cách sử dụng `dynamic auto` 
   SwitchB(config)#interface fa0/14
   SwitchB(config-if)#switchport trunk native vlan 10
 ```
+
+![image](https://user-images.githubusercontent.com/71936544/137842210-319f22e4-04f9-46f4-85ea-9d229638f891.png)
+
 
 ### Kết nối giữa 2 Vlan
 
@@ -156,3 +162,44 @@ Bộ chuyển mạch nào có số lần sửa đổi cao hơn thì các bộ ch
 >   + Xóa fiel vlan.dat trong bộ nhớ flash
 
 Nếu ta xóa hết Vlan của A thì tất cả các interface sẽ ở trạng thái 'no-man's land' chứ không phải Vlan1 như ban đầu. Do đó ta cần gán lại chúng
+
+# Các lệnh kiểm tra và các lệnh khác
+### Vlan
+Kiểm tra các Vlan đang có và cổng được gán
+```
+  SwitchA#show vlan
+```
+
+![image](https://user-images.githubusercontent.com/71936544/137841576-5c40f201-9e52-4cc3-afa8-bb19e2bb52fd.png)
+
+Xác định cấu hình trên 1 cổng nào đó
+```
+  SwitchA#show interfaces fa0/1 switchport
+```
+
+![image](https://user-images.githubusercontent.com/71936544/137841613-1668d4bb-da78-4ebe-b166-ed9416acda28.png)
+![image](https://user-images.githubusercontent.com/71936544/137841661-ef9441a4-ce17-4aab-998f-d29392dd2127.png)
+
+Lệnh `show vlan` chỉ cho ra các giao diện ở mode Access mà không có giao diện được trunk nên để xem các giao diện đã trunk thì sử dụng lệnh sau
+```
+  SwitchB#show interface fa0/14 trunk
+```
+![image](https://user-images.githubusercontent.com/71936544/137841910-68ad97ff-c313-4b0a-b6de-a2526888ef76.png)
+![image](https://user-images.githubusercontent.com/71936544/137841916-ad316497-95d2-4204-8f07-dd026deb1999.png)
+
+Như ta thấy thì Vlan 1-4094 được cho phép vào đường trunk, để giới hạn số Vlan, ta dùng lệnh sau:
+```
+  SwitchB(config-if)#switchport trunk allowed vlan remove 1-4094
+  SwitchB(config-if)#switchport trunk allowed vlan add 1-50
+  ---
+  SwitchB#show interface fa0/14 trunk
+```
+
+![image](https://user-images.githubusercontent.com/71936544/137842047-59bb3919-6ec9-4804-8e03-29613987899e.png)
+
+### VTP
+Xem trạng thái VTP
+```
+  SwitchA#show vtp status
+```
+![image](https://user-images.githubusercontent.com/71936544/137842281-8840bf15-6f9d-4002-837d-355f04576573.png)
