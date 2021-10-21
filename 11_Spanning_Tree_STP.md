@@ -39,7 +39,7 @@ Sau khi gửi tràn ngập trên mạng các gói BPDU chứa thông tin mà Spa
 
 Mức độ ưu tiên và địa chỉ MAC quyết định bridge ID. Ví dụ dưới đây, 3 switches có cùng giá trị ưu tiên nên địa chỉ MAC sẽ là tham số quyết định. Do A có địa chỉ MAC thấp nhất nên sẽ có bridge ID tốt nhất và sẽ trở thành `root`
 
-Các cổng trên `root` sẽ luôn được `chỉ định`, nghĩa là chúng luôn ở trạng thái `chuyển tiếp`
+Các cổng trên `root` sẽ luôn được `chỉ định - designated port`, nghĩa là chúng luôn ở trạng thái `chuyển tiếp - forwarding mode`
 
 ![image](https://user-images.githubusercontent.com/71936544/138021782-a1e2027d-aab6-488d-8ae3-f737097ce49d.png)
 
@@ -49,6 +49,7 @@ Các bộ chuyển mạch còn lại sẽ được gọi là `non-root`, những
 
 > Lưu ý:
 > Đường đi "ngắn nhất" cũng được xem xét cả về mặt tốc độ của giao diện
+> 
 > ![image](https://user-images.githubusercontent.com/71936544/138024072-3c06b6c8-0c33-4960-8e89-fb225687e6a0.png)
 > 
 > Sẽ tốt hơn nếu đi qua 4 đường 1Gb thay vì qua 1 đường 100Mb do 4x4= COST 16 (Nhỏ hơn COST 19 của 1 đường 100 Mb)
