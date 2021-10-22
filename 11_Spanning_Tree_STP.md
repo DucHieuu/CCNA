@@ -90,4 +90,108 @@ Cuối cùng, đối với `MST`, khi chúng ta có nhiều Vlan cần cấu hì
 ![image](https://user-images.githubusercontent.com/71936544/138027039-3cefdf9a-a51a-481e-90ff-aef881f8cc25.png)
 
 
+# Các lệnh SHOW và cấu hình
+
+## `show spanning-tree`
+
+![image](https://user-images.githubusercontent.com/71936544/138389129-cb6aeed8-5c9f-4af1-8f0c-74cf46e5d352.png)
+
+### SwitchA
+
+![image](https://user-images.githubusercontent.com/71936544/138389220-f79623aa-ea39-425d-8454-5dbcf5a05949.png)
+
+Giải thích kết quả lệnh:
+  - 2 dòng đầu: Hiển thị thông tin Spanning-tree cho Vlan1 (PVST-Per VLAN spanning-tree)
+  - 4 dòng tiếp (Từ Root ID): Hiển thị thông tìn của `Root Bridge`
+    + Độ ưu tiên của Root: 32769
+    + Địa chỉ MAC của Root: 000f.34ca.1000
+    + Từ Switch A có COST=19 để tới Root và port dẫn tới Root là fa0/17
+  - 2 dòng tiếp (Bridge ID): Hiển thị thông tin của SwitchA
+    + Độ ưu tiên: 32769
+    + `sys-id-ext 1`: Số hiệu Vlan. Độ ưu tiên là 32768 nhưng Spanning-tree sẽ thêm số hiệu Vlan vào và có độ ưu tiên là 32769
+    + Địa chỉ MAC của SwitchA: 0011.bb0b.3600
+  - `Hello Time 2 sec Max Age 20 sec Forward Delay 15 sec`
+    + Hello Time: Mỗi 2s gửi 1 bản tin BPDU
+    + Max Age: Nếu không nhận được bản tin BPDU sau 20s thì sẽ biết đã có sự thay đổi trong mạng và cần tái kiểm tra lại mô hình mạng
+    + Forward Delay: Mất 15s để chuyển sang trạng thái `forwarding`
+  - Các dòng cuối: Hiển thị các cổng và trạng thái của chúng. Hiện tại, SwitchA có 2 giao diện
+    + Fa0/24 là cổng `designated` và trong trạng thái `FWD - Forwading Mode`
+    + Fa0/17 là cổng `root` và trong trạng thái `FWD - Forwading Mode`
+    + prio.nbr: là `port priority`
+  
+### SwitchB (tương tự)
+  
+  ![image](https://user-images.githubusercontent.com/71936544/138390822-1477c694-3202-4ad3-9645-7bb321e7ed81.png)
+
+  - Có 1 điểm khác biệt ở các dòng cuối:
+    + Fa0/14 là cổng `alternate` và trong trạng thái `BLK - Blocking Mode`
+  > alternate port hay blocked port chính là designate port như phần đầu đã nêu. Khi chạy PVST thì được gọi là alternate port
+
+### SwitchC (tương tự)
+
+![image](https://user-images.githubusercontent.com/71936544/138391075-11d1cb98-e2fe-41ca-83be-1b000dc6b192.png)
+
+  - Cấc phần Root ID và Bridge ID đều hiển thị thông số của SwitchC và có thêm dòng `This bridge is the root`
+
+## Tại sao C được chọn là ROOT và tại sao B bị BLOCK 1 cổng
+
+![image](https://user-images.githubusercontent.com/71936544/138391394-3f869609-adbf-4a12-92f6-945f6fbcbb92.png)
+
+  - Ta thấy được các địa chỉ MAC của 3 switches và đưa ra so sánh thì: C<A<B do đó:
+    + C được chọn làm ROOT do có địa chỉ MAC thấp nhất
+    + B bị block 1 cổng do địa chỉ MAC của A nhỏ hơn
+
+## Chuyển quyền `root` cho switch khác
+  - Cách 1: `SwitchA(config)#spanning-tree vlan 1 root primary`
+
+    ![image](https://user-images.githubusercontent.com/71936544/138391794-ee03f2da-b60f-40f9-ace3-70374c2e5b27.png)
+  
+    + Lệnh này giảm priority của switch xuống
+    + Do ta sử dụng PVST nên có thể thay đổi cho mỗi VLAN
+
+  - Cách 2: Thay đổi thủ công độ ưu tiên của switch `SwitchA(config)#spanning-tree vlan 1 priority [...]`
+
+    ![image](https://user-images.githubusercontent.com/71936544/138392049-9db71f8d-fd56-4809-8606-1491b37923e0.png)
+
+  - Sau khi thay đổi, topo mạng sẽ trở thành:
+
+    ![image](https://user-images.githubusercontent.com/71936544/138392139-a076b9c8-03f9-4a45-b30b-a2d3817bec40.png)
+
+## Thay đổi COST của tuyến đường
+  Dựa vào topo trên, cổng Fa0/14 của B là `root port` với COST=19. Sẽ ra sao ta đổi đường đi tới `root bridge` theo đường Fa0/16 thông qua C với COST=19+19=38. Ta thực hiện:
+  
+  Đổi COST của cổng Fa0/14
+  
+  ![image](https://user-images.githubusercontent.com/71936544/138392486-20476e57-2557-4774-9298-0327c3d2b697.png)
+  
+  Xem xét kết quả, ta thấy Fa0/14 đã bị block và giờ Fa0/16 là `root port`
+  
+  ![image](https://user-images.githubusercontent.com/71936544/138392498-cce33981-4fe8-4224-9a92-d17e7410c383.png)
+  
+## Thay đổi `port-priority`
+Giả sử ta thêm 1 đoạn cáp giữa A và B
+
+![image](https://user-images.githubusercontent.com/71936544/138392890-0d41dc6c-0819-431f-ac02-99fdf66af418.png)
+
+Dùng lệnh show trên B, ta có Fa0/13 là `root port` do có port-priority là 128.15
+
+![image](https://user-images.githubusercontent.com/71936544/138392941-8726d710-2491-45f6-8c10-abfa37f647f2.png)
+
+> 128 là giá trị mặc định, ta có thể thay đổi được. 15 và 16 có số hiệu cổng (port number), mỗi giao diện được gán một số hiệu cổng khác nhau
+
+Ta thay đổi mức ưu tiên trên A, KHÔNG PHẢI B như sau
+
+![image](https://user-images.githubusercontent.com/71936544/138393105-5360a10e-b180-4c7b-b4a9-e1ea7bfb6d54.png)
+
+Khi này, B nhận được bản tin BPDU trên cả Fa0/13 và Fa0/14. Cả 2 bản tin đều giống nhau. Tuy nhiên do thay đổi ưu tiên trên A nên B sẽ nhận bản tin BPDU với cổng có ưu tiên tốt hơn (Cổng Fa0/14). Fa0/14 trở thành `root port`. Xem xét kết quả, ta thấy
+
+![image](https://user-images.githubusercontent.com/71936544/138393204-3c6234b6-7b5a-4a9e-83af-85ec592bd5c9.png)
+
+![image](https://user-images.githubusercontent.com/71936544/138393210-85acfd55-bc5e-4ed1-a151-309becd424f5.png)
+
+Trong trường hợp ta thêm cáp giữa B và C thì giao diện này sẽ trở thành `alternate port` và bị block
+
+![image](https://user-images.githubusercontent.com/71936544/138393296-9b53e187-d82a-4185-85ca-6249d7b531a0.png)
+
+![image](https://user-images.githubusercontent.com/71936544/138393303-5c3f676d-117f-433e-8f7e-fed59e91931a.png)
 
