@@ -59,10 +59,12 @@ Dù đã xác định các cổng `root` và `non-root` nhưng vòng lặp vẫn
 
 ![image](https://user-images.githubusercontent.com/71936544/138024634-cb311386-d9ba-4681-89fe-3ac2ef493425.png)
 
-Khi chúng ta khởi động Switch và cắm cáp vào 1 cổng, thì switch sẽ tiến hành các giai đoạn sau:
+### Khi chúng ta khởi động Switch và cắm cáp vào 1 cổng, thì switch sẽ tiến hành các giai đoạn sau:
   + Cổng trong trạng thái `listening` khoảng 15s. Trong trạng thái này, nó sẽ gửi và nhận các bản tin BPDU nhưng không học địa chỉ MAC và không truyền dữ liệu
   + Cổng trong trạng thái `learning` khoảng 15s. Trong trạng thái này, nó sẽ gửi và nhận các bản tin BPDU nhưng giờ nó bắt đầu học địa chỉ MAC và vẫn không truyền dữ liệu
   + Cuối cùng nó sang chế độ mới và bắt đầu truyền dữ liệu
+
+![image](https://user-images.githubusercontent.com/71936544/138395354-af14ac53-6061-428f-8551-bf7d35eca0ea.png)
 
 
 # Các kiểu hoạt động của Spanning-Tree
@@ -133,7 +135,7 @@ Giải thích kết quả lệnh:
 
   - Cấc phần Root ID và Bridge ID đều hiển thị thông số của SwitchC và có thêm dòng `This bridge is the root`
 
-## Tại sao C được chọn là ROOT và tại sao B bị BLOCK 1 cổng
+## Tại sao C được chọn là ROOT và tại sao B bị BLOCK 1 cổng?
 
 ![image](https://user-images.githubusercontent.com/71936544/138391394-3f869609-adbf-4a12-92f6-945f6fbcbb92.png)
 
@@ -195,3 +197,53 @@ Trong trường hợp ta thêm cáp giữa B và C thì giao diện này sẽ tr
 
 ![image](https://user-images.githubusercontent.com/71936544/138393303-5c3f676d-117f-433e-8f7e-fed59e91931a.png)
 
+## Spanning-Tree cho mạng nhiều Vlan
+
+![image](https://user-images.githubusercontent.com/71936544/138394977-faa0b283-5218-49f8-a0b0-9b5b4f9b4cbc.png)
+
+Để xây dựng mạng như ảnh trên, ta thực hiện như sau:
+  - Tạo 3 Vlan 10,20 và 30
+
+    ![image](https://user-images.githubusercontent.com/71936544/138395016-e07de340-a3bc-43d3-a367-340e4464f9d4.png)
+    
+  - Cấu hình trunk giữa các switches (Nếu chạy VTP server/client thì chỉ cần thực hiện trên 1 thiết bị)
+
+    ![image](https://user-images.githubusercontent.com/71936544/138395047-33419995-23a9-4edb-8c71-b3ee0641b40b.png)
+
+  - Kiểm tra thì t thấy switchC là root của cả 3 Vlan
+
+    ![image](https://user-images.githubusercontent.com/71936544/138395159-f4b3b6c8-8a05-43ad-a459-e11f98c9130f.png)
+
+  - Thực hiện thay đổi mức ưu tiên để A trở thành root của Vlan 10, B là root của Vlan 20 và C là root của Vlan 30
+    ```
+      SwitchA(config)#spanning-tree vlan 10 priority 4096
+      
+      SwitchB(config)#spanning-tree vlan 20 priority 4096
+      
+      SwitchC(config)#spanning-tree vlan 30 priority 4096
+    ```
+
+## Kết nối giữa Switch với thiết bị đầu cưới (PC, server)
+Như đã nói ở trên, Switch sẽ thực hiện các bước như hình dưới đây khi cắm cáp. Tuy nhiên, khi kết nối với PC, Server thì các thiết bị này sẽ không gửi bản tin BPDU cho switch. Do đó ta có thể bỏ qua các bước trên và tiến thẳng tới chế độ `forwarding` bằng `Portfast`
+![image](https://user-images.githubusercontent.com/71936544/138395580-78a406be-3786-40f4-bdf7-f28ef4be166e.png)
+
+`Portfast` là giải pháp độc quyền của Cisco, để thiết lập `portfast`, ta vào cấu hình giao diện kết nối với PC,Server và thực hiện như sau
+```
+  SwitchA(config)interface fa0/1
+  SwitchA(config-if)#spanning-tree portfast
+```
+
+Để kích hoạt trên tất cả các giao diện ở `access mode`, ta thực hiện
+```
+  SwitchB(config)#spanning-tree portfast default
+```
+
+## Kích hoạt chế độ `rapid spanning-tree` trên switch
+Để kích hoạt `PVRST`, ta thực hiện như sau
+```
+  SwitchA(config)#spanning-tree mode rapid-pvst
+  
+  SwitchB(config)#spanning-tree mode rapid-pvst
+  
+  SwitchC(config)#spanning-tree mode rapid-pvst
+```
